@@ -1,5 +1,6 @@
 package com.example.assistencia_tecnica.database.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,6 +32,7 @@ public class ClienteEntity {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
     private Set<EquipamentoEntity> equipamentos = new HashSet<>();
 
