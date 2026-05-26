@@ -13,29 +13,23 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(
-        name = "servico_Realizado",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"ordem_servico_id", "peca_id"})
-)
+@Table(name = "servico_Realizado")
 public class ServicoRealizadoEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @JsonBackReference("ordem-itens")
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "ordem_servico_id", nullable = false)
-    private OrdemServicoEntity ordemServico;
+    private OrdemServicoEntity ordemServicoId;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "peca_id", nullable = false)
-    private PecaEntity peca;
+    @JoinColumn(name = "servico_id", nullable = false)
+    private ServicoEntity servicoId;
 
-    @Column(nullable = false)
-    private Integer quantidade;
-
-    @Column(name = "preco_unitario_momento", nullable = false, precision = 19, scale = 2)
-    private BigDecimal precoUnitarioMomento;
+    @Column(name = "preco_cobrado", nullable = false, precision = 19, scale = 2)
+    private BigDecimal precoCobrado;
 
 }
