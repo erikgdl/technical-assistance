@@ -21,32 +21,13 @@ import java.util.UUID;
 @Builder
 public class OrdemServicoDto {
 
-
-    @NotBlank
-    private String defeitoRelatado;
-
-    @NotBlank
-    private String laudoTecnico;
-
-    @NotNull
-    private StatusServicoEnum status;
-
-    @NotNull
-    private LocalDateTime dataAbertura;
-
-    private LocalDateTime dataConclusao;
-
-    @NotNull
-    @DecimalMin(value = "0.00")
-    private BigDecimal valorTotal;
-
-    @NotNull
+    @NotNull(message = "O ID do cliente é obrigatório")
     private UUID clienteId;
 
-    @NotNull
+    @NotNull(message = "O ID do equipamento é obrigatório")
     private UUID equipamentoId;
 
-    @NotNull
-    private Long tecnicoId;
+    @NotBlank(message = "O defeito relatado não pode estar vazio")
+    private String defeitoRelatado;
 
 }
