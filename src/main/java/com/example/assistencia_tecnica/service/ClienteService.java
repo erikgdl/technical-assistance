@@ -13,7 +13,7 @@ public class ClienteService {
 
     private final IClienteRepository clienteRepository;
 
-    public void criarCliente(ClienteDto clienteDto) throws BadRequestException {
+    public ClienteEntity criarCliente(ClienteDto clienteDto) throws BadRequestException {
         ClienteEntity clienteEmail = clienteRepository.findByEmail(clienteDto.getEmail())
                 .orElse(null);
 
@@ -28,7 +28,7 @@ public class ClienteService {
             throw new BadRequestException("Aluno já cadastrado com este Cpf");
         }
 
-        clienteRepository.save(ClienteEntity.builder()
+        return clienteRepository.save(ClienteEntity.builder()
                 .cpf(clienteDto.getCpf())
                 .nome(clienteDto.getNome())
                 .telefone(clienteDto.getTelefone())
