@@ -19,6 +19,8 @@ import java.math.BigDecimal;
 @Builder
 public class PecaDto {
 
+    private Long pecaId;
+
     @NotBlank
     private String nome;
 
