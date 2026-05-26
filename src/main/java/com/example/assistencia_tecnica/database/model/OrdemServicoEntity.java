@@ -16,6 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Builder
 @Table(name = "ordem_servico")
 public class OrdemServicoEntity {
 
@@ -46,19 +47,15 @@ public class OrdemServicoEntity {
     private BigDecimal valorTotal;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id", nullable = false)
+    @JoinColumn(name = "cliente_id")
     private ClienteEntity cliente;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "equipamento_id", nullable = false)
+    @JoinColumn(name = "equipamento_id")
     private EquipamentoEntity equipamento;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "tecnico_id", nullable = false)
+    @JoinColumn(name = "tecnico_id")
     private TecnicoEntity tecnico;
-
-    @JsonManagedReference("ordem-itens")
-    @OneToMany(mappedBy = "ordemServico", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<ServicoRealizadoEntity> itensPeca = new HashSet<>();
 
 }
