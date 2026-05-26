@@ -18,6 +18,8 @@ import java.math.BigDecimal;
 @Builder
 public class ServicoDto {
 
+    private Long id;
+
     @NotBlank
     private String descricao;
 
