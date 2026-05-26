@@ -22,7 +22,7 @@ public class TecnicoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, updatable = false, length = 5)
     private String matricula;
 
     @Column(nullable = false)
