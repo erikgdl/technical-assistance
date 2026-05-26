@@ -15,9 +15,6 @@ import lombok.Setter;
 public class TecnicoDto {
 
     @NotBlank
-    private String matricula;
-
-    @NotBlank
     private String nome;
 
     @NotBlank
