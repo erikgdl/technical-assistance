@@ -1,13 +1,13 @@
-# Assistencia Tecnica API
+# Assistência Técnica API
 
-API REST para gestao de assistencia tecnica, com cadastro de clientes, equipamentos, tecnicos, pecas, servicos e fluxo completo de ordem de servico.
+API REST para gestão de assistência técnica, com cadastro de clientes, equipamentos, técnicos, peças, serviços e fluxo completo de ordem de serviço.
 
-## Visao geral
+## Visão geral
 
 - **Base URL:** `http://localhost:8080/v1`
 - **Formato:** JSON (`application/json`)
-- **Autenticacao:** nao implementada
-- **Persistencia:** PostgreSQL
+- **Autenticação:** não implementada
+- **Persistência:** PostgreSQL
 
 ## Stack
 
@@ -40,13 +40,13 @@ src/
     java/com/example/assistencia_tecnica/
 ```
 
-## Pre-requisitos
+## Pré-requisitos
 
 - JDK 21
 - Maven 3.9+
-- PostgreSQL em execucao
+- PostgreSQL em execução
 
-## Configuracao
+## Configuração
 
 Arquivo: `src/main/resources/application.yaml`
 
@@ -71,7 +71,7 @@ spring:
         format_sql: true
 ```
 
-Variaveis de ambiente obrigatorias:
+Variáveis de ambiente obrigatórias:
 
 - `DATABASE_USERNAME`
 - `DATABASE_PASSWORD`
@@ -80,7 +80,7 @@ Variaveis de ambiente obrigatorias:
 
 1. Crie o banco `assistencia_tecnica` no PostgreSQL.
 2. Exporte `DATABASE_USERNAME` e `DATABASE_PASSWORD`.
-3. Inicie a aplicacao:
+3. Inicie a aplicação:
 
 ```bash
 mvn spring-boot:run
@@ -91,20 +91,20 @@ mvn spring-boot:run
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-## Organizacao por camada
+## Organização por camada
 
 | Camada | Responsabilidade |
 | --- | --- |
-| `controller` | Exposicao dos endpoints HTTP |
-| `service` | Regras de negocio |
+| `controller` | Exposição dos endpoints HTTP |
+| `service` | Regras de negócio |
 | `dto` | Contratos de entrada |
 | `database/model` | Entidades JPA |
 | `database/repository` | Acesso ao banco |
-| `handler` | Tratamento global de excecoes |
-| `exception` | Excecoes e payload de erro |
-| `enums` | Estados do dominio |
+| `handler` | Tratamento global de exceções |
+| `exception` | Exceções e payload de erro |
+| `enums` | Estados do domínio |
 
-## Modelo de dominio
+## Modelo de domínio
 
 | Entidade | ID | Principais campos | Relacionamentos |
 | --- | --- | --- | --- |
@@ -113,41 +113,41 @@ mvn spring-boot:run
 | `TecnicoEntity` | Long | `matricula`, `nome`, `especialidade` | Nenhum |
 | `PecaEntity` | Long | `nome`, `marca`, `quantidadeEstoque`, `precoUnitario` | Nenhum |
 | `ServicoEntity` | Long | `descricao`, `precoBase` | Nenhum |
-| `OrdemServicoEntity` | UUID | `numeroOs`, `defeitoRelatado`, `laudoTecnico`, `status`, `dataAbertura`, `dataConclusao`, `valorTotal` | N:1 com cliente, equipamento e tecnico |
-| `PecaUtilizadaEntity` | Long | `quantidade`, `precoUnitarioMomento` | N:1 com OS e peca |
-| `ServicoRealizadoEntity` | Long | `precoCobrado` | N:1 com OS e servico |
+| `OrdemServicoEntity` | UUID | `numeroOs`, `defeitoRelatado`, `laudoTecnico`, `status`, `dataAbertura`, `dataConclusao`, `valorTotal` | N:1 com cliente, equipamento e técnico |
+| `PecaUtilizadaEntity` | Long | `quantidade`, `precoUnitarioMomento` | N:1 com OS e peça |
+| `ServicoRealizadoEntity` | Long | `precoCobrado` | N:1 com OS e serviço |
 
 ## IDs e paginação
 
-- `UUID`: cliente, equipamento e ordem de servico
-- `Long`: tecnico, peca, servico, peca utilizada e servico realizado
+- `UUID`: cliente, equipamento e ordem de serviço
+- `Long`: técnico, peça, serviço, peça utilizada e serviço realizado
 - Listagens paginadas usam `page` e `size`
-- Padrao de pagina: `page=0`, `size=10`
+- Padrão de página: `page=0`, `size=10`
 
-Ordenacao aplicada nas listagens paginadas:
+Ordenação aplicada nas listagens paginadas:
 
 - Cliente: `nome` asc
-- Peca: `nome` asc
-- Servico: `descricao` asc
-- Ordem de servico: `dataAbertura` desc
-- Equipamento: sem ordenacao explicita
+- Peça: `nome` asc
+- Serviço: `descricao` asc
+- Ordem de serviço: `dataAbertura` desc
+- Equipamento: sem ordenação explícita
 
-## Fluxo da ordem de servico
+## Fluxo da ordem de serviço
 
-Status disponiveis no enum:
+Status disponíveis no enum:
 
 `ABERTA`, `EM_ANALISE`, `AGUARDANDO_APROVACAO_CLIENTE`, `APROVADA`, `REJEITADA`, `EM_MANUTENCAO`, `CONCLUIDA`, `ENTREGUE`
 
-Transicoes implementadas:
+Transições implementadas:
 
 1. Abrir OS: cria com status `ABERTA`, `numeroOs` gerado automaticamente e `valorTotal = 0`.
-2. Iniciar analise: apenas se estiver `ABERTA`; vincula tecnico.
+2. Iniciar análise: apenas se estiver `ABERTA`; vincula técnico.
 3. Registrar laudo: apenas se estiver `EM_ANALISE`.
-4. Adicionar peca e servico: apenas se estiver `EM_ANALISE`; soma o valor no total.
-5. Enviar para aprovacao: exige laudo preenchido e `valorTotal > 0`.
-6. Aprovar: apenas se estiver `AGUARDANDO_APROVACAO_CLIENTE`; valida estoque e baixa as pecas.
-7. Iniciar manutencao: apenas se estiver `APROVADA`.
-8. Concluir manutencao: apenas se estiver `EM_MANUTENCAO`; registra `dataConclusao`.
+4. Adicionar peça e serviço: apenas se estiver `EM_ANALISE`; soma o valor no total.
+5. Enviar para aprovação: exige laudo preenchido e `valorTotal > 0`.
+6. Aprovar: apenas se estiver `AGUARDANDO_APROVACAO_CLIENTE`; valida estoque e baixa as peças.
+7. Iniciar manutenção: apenas se estiver `APROVADA`.
+8. Concluir manutenção: apenas se estiver `EM_MANUTENCAO`; registra `dataConclusao`.
 9. Entregar equipamento: apenas se estiver `CONCLUIDA`.
 10. Reabrir OS: permitido apenas fora de `CONCLUIDA` e `ENTREGUE`.
 
@@ -167,45 +167,45 @@ Transicoes implementadas:
 
 ### Equipamento
 
-| Metodo | Endpoint | Descricao                      |
+| Método | Endpoint | Descrição                      |
 | --- | --- |--------------------------------|
 | POST | `/v1/equipamento` | Cadastra equipamento           |
 | GET | `/v1/equipamento/todos` | Lista todos                    |
 | GET | `/v1/equipamento` | Lista paginada                 |
 | GET | `/v1/equipamento/{id}` | Busca por ID                   |
 | GET | `/v1/equipamento/cliente/{clienteId}` | Lista por cliente              |
-| GET | `/v1/equipamento/numero-serie/{numeroSerie}` | Busca por numero de serie IMEI |
+| GET | `/v1/equipamento/numero-serie/{numeroSerie}` | Busca por número de série IMEI |
 
-### Tecnico
+### Técnico
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 | --- | --- | --- |
-| POST | `/v1/tecnico` | Cadastra tecnico |
+| POST | `/v1/tecnico` | Cadastra técnico |
 | GET | `/v1/tecnico/todos` | Lista todos |
 | GET | `/v1/tecnico/{id}` | Busca por ID |
-| GET | `/v1/tecnico/matricula/{matricula}` | Busca por matricula |
+| GET | `/v1/tecnico/matricula/{matricula}` | Busca por matrícula |
 
-### Peca
+### Peça
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 | --- | --- | --- |
-| POST | `/v1/peca` | Cadastra peca |
+| POST | `/v1/peca` | Cadastra peça |
 | GET | `/v1/peca/todos` | Lista todas |
 | GET | `/v1/peca` | Lista paginada |
 | GET | `/v1/peca/{id}` | Busca por ID |
 
-### Servico
+### Serviço
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 | --- | --- | --- |
-| POST | `/v1/servico` | Cadastra servico |
+| POST | `/v1/servico` | Cadastra serviço |
 | GET | `/v1/servico/todos` | Lista todos |
 | GET | `/v1/servico` | Lista paginada |
 | GET | `/v1/servico/{id}` | Busca por ID |
 
-### Ordem de servico
+### Ordem de serviço
 
-| Metodo | Endpoint | Descricao |
+| Método | Endpoint | Descrição |
 | --- | --- | --- |
 | POST | `/v1/ordens-servico` | Abre OS |
 | GET | `/v1/ordens-servico/todos` | Lista todas |
@@ -213,18 +213,18 @@ Transicoes implementadas:
 | GET | `/v1/ordens-servico/{id}` | Busca por ID |
 | GET | `/v1/ordens-servico/status/{status}` | Busca por status |
 | GET | `/v1/ordens-servico/cliente/{clienteId}` | Busca por cliente |
-| GET | `/v1/ordens-servico/tecnico/{tecnicoId}` | Busca por tecnico |
-| GET | `/v1/ordens-servico/{id}/pecas` | Lista pecas usadas na OS |
-| GET | `/v1/ordens-servico/{id}/servicos` | Lista servicos da OS |
-| PATCH | `/v1/ordens-servico/{id}/iniciar-analise/{tecnicoId}` | Inicia analise |
-| PATCH | `/v1/ordens-servico/{id}/laudo` | Registra laudo tecnico |
-| POST | `/v1/ordens-servico/{id}/pecas` | Adiciona peca na OS |
-| POST | `/v1/ordens-servico/{id}/servicos` | Adiciona servico na OS |
-| PATCH | `/v1/ordens-servico/{id}/enviar-aprovacao` | Envia para aprovacao |
+| GET | `/v1/ordens-servico/tecnico/{tecnicoId}` | Busca por técnico |
+| GET | `/v1/ordens-servico/{id}/pecas` | Lista peças usadas na OS |
+| GET | `/v1/ordens-servico/{id}/servicos` | Lista serviços da OS |
+| PATCH | `/v1/ordens-servico/{id}/iniciar-analise/{tecnicoId}` | Inicia análise |
+| PATCH | `/v1/ordens-servico/{id}/laudo` | Registra laudo técnico |
+| POST | `/v1/ordens-servico/{id}/pecas` | Adiciona peça na OS |
+| POST | `/v1/ordens-servico/{id}/servicos` | Adiciona serviço na OS |
+| PATCH | `/v1/ordens-servico/{id}/enviar-aprovacao` | Envia para aprovação |
 | PATCH | `/v1/ordens-servico/{id}/aprovar` | Aprova e baixa estoque |
-| PATCH | `/v1/ordens-servico/{id}/iniciar-manutencao` | Inicia manutencao |
+| PATCH | `/v1/ordens-servico/{id}/iniciar-manutencao` | Inicia manutenção |
 | PATCH | `/v1/ordens-servico/{id}/reabrir` | Reabre a OS |
-| PATCH | `/v1/ordens-servico/{id}/concluir` | Conclui manutencao |
+| PATCH | `/v1/ordens-servico/{id}/concluir` | Conclui manutenção |
 | PATCH | `/v1/ordens-servico/{id}/entregar` | Marca como entregue |
 
 ## DTOs principais
@@ -240,12 +240,12 @@ Transicoes implementadas:
 }
 ```
 
-Validacoes:
+Validações:
 
-- `cpf`: obrigatorio, 11 digitos, CPF valido
-- `nome`: obrigatorio
-- `telefone`: obrigatorio, formato `(11) 91234-5678` ou `(11) 1234-5678`
-- `email`: obrigatorio e valido
+- `cpf`: obrigatório, 11 dígitos, CPF válido
+- `nome`: obrigatório
+- `telefone`: obrigatório, formato `(11) 91234-5678` ou `(11) 1234-5678`
+- `email`: obrigatório e válido
 
 ### EquipamentoDto
 
@@ -325,17 +325,17 @@ Validacoes:
 }
 ```
 
-## Observacoes sobre os DTOs
+## Observações sobre os DTOs
 
-- `PecaDto` expoe `pecaId`, mas a criacao atual da peca usa apenas `nome`, `marca`, `quantidadeEstoque` e `precoUnitario`.
-- `ServicoDto` expoe `id`, mas a criacao atual do servico usa apenas `descricao` e `precoBase`.
-- `ClienteEntity` possui a relacao com equipamentos, mas ela nao e serializada no JSON por causa de `@JsonIgnore`.
+- `PecaDto` expõe `pecaId`, mas a criação atual da peça usa apenas `nome`, `marca`, `quantidadeEstoque` e `precoUnitario`.
+- `ServicoDto` expõe `id`, mas a criação atual do serviço usa apenas `descricao` e `precoBase`.
+- `ClienteEntity` possui a relação com equipamentos, mas ela não é serializada no JSON por causa de `@JsonIgnore`.
 
 ## Simulação de Fluxo: Do Atendimento à Entrega
 
 Abaixo está a sequência cronológica exata de chamadas à API simulando um atendimento real.
 
-| Passo | Metodo | Endpoint | Descricao |
+| Passo | Método | Endpoint | Descrição |
 | :--- | :--- | :--- | :--- |
 | **1** | POST | `/v1/clientes` | Cadastra o cliente no balcão |
 | **2** | POST | `/v1/equipamentos` | Vincula o aparelho quebrado ao cliente |
@@ -353,7 +353,7 @@ Abaixo está a sequência cronológica exata de chamadas à API simulando um ate
 | **14**| PATCH| `/v1/ordens-servico/{id}/concluir` | Finaliza conserto e gera data de conclusão |
 | **15**| PATCH| `/v1/ordens-servico/{id}/entregar` | Cliente paga e retira o aparelho (ENTREGUE) |
 
-> 💡 **Nota:** O `{id}` utilizado dos passos 7 ao 15 é o **UUID da Ordem de Serviço** gerado automaticamente no **Passo 6**. Basta 
+> 💡 **Nota:** O `{id}` utilizado dos passos 7 ao 15 é o **UUID da Ordem de Serviço** gerado automaticamente no **Passo 6**. Basta
 > copiar o ID retornado na resposta do Passo 6 e usá-lo nas URLs dos passos seguintes.
 
 ## Erros e respostas
@@ -362,22 +362,49 @@ O handler global retorna:
 
 ```json
 {
-  "message": "Descricao do erro",
+  "message": "Descrição do erro",
   "status": 400
 }
 ```
 
-Codigos tratados explicitamente:
+Códigos tratados explicitamente:
 
 - `400` para `BadRequestException`
 - `404` para `NotFoundException`
-- `500` para `Exception` generica
+- `500` para `Exception` genérica
 
-Validacoes Bean Validation (`@Valid`) usam o retorno padrao do Spring.
+Validações Bean Validation (`@Valid`) usam o retorno padrão do Spring.
 
-## Testes
+## Execução com Docker
 
-O projeto possui apenas o teste padrao de contexto:
+A aplicação possui suporte nativo para execução em containers, orquestrando a API e o banco de dados em um ambiente isolado.
 
-- `src/test/java/com/example/assistencia_tecnica/AssistenciaTecnicaApplicationTests.java`
+### Arquivos de configuração
 
+- **Dockerfile**: Configurado com multi-stage build. Realiza a compilação limpa via Maven no primeiro estágio e executa a aplicação utilizando uma imagem enxuta do Eclipse Temurin 21 no segundo estágio.
+- **docker-compose.yml**: Levanta os serviços `db` (PostgreSQL 16) e `app` (API REST). Configurado com persistência de dados (volumes), limites de memória (RAM) por container e injeção segura de variáveis de ambiente.
+
+### Variáveis de ambiente do Compose
+
+Para que a orquestração funcione corretamente, é necessário fornecer as credenciais do banco:
+
+- `DB_USERNAME`
+- `DB_PASSWORD`
+
+### Como iniciar via Docker
+
+Na raiz do projeto (onde os arquivos Docker estão localizados), execute:
+
+```bash
+docker-compose up -d --build
+```
+
+## Considerações Finais
+
+Valeu por conferir o projeto!
+
+Esta API foi desenvolvida com o foco em aplicar e consolidar na prática os conceitos do ecossistema Java e Spring Boot. A ideia foi estruturar uma base sólida, limpa e funcional para um cenário real de assistência técnica.
+
+Fique à vontade para clonar, explorar o código e testar a aplicação no seu ambiente. Se encontrar algum *bug*, tiver alguma sugestão de melhoria ou quiser contribuir com otimizações no código, é só abrir uma *issue* ou mandar um *pull request*.
+
+Se este repositório foi útil para você de alguma forma, considere deixar uma ⭐.
