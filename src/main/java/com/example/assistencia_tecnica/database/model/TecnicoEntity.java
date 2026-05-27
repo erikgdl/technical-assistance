@@ -4,11 +4,6 @@ package com.example.assistencia_tecnica.database.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-
-
 @Setter
 @Getter
 @AllArgsConstructor

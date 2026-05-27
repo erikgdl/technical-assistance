@@ -1,14 +1,11 @@
 package com.example.assistencia_tecnica.database.model;
 
 import com.example.assistencia_tecnica.enums.StatusServicoEnum;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Setter
