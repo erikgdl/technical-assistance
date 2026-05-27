@@ -11,15 +11,19 @@ import com.example.assistencia_tecnica.enums.StatusServicoEnum;
 import com.example.assistencia_tecnica.exception.BadRequestException;
 import com.example.assistencia_tecnica.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ServicoService {
 
-    private final IOrdemServicoRepository ordemServicoRepository;
     private final IServicoRepository servicoRepository;
-    private final IServicoRealizadoRepository servicoRealizadoRepository;
 
     public ServicoEntity criarServico(ServicoDto dto) {
 
@@ -29,6 +33,18 @@ public class ServicoService {
                 .build());
     }
 
+    public List<ServicoEntity> getListarServico() {
+        return servicoRepository.findAll();
+    }
 
+    public Page<ServicoEntity> listarTodosPaginado(int page, int size) {
+        Pageable paginacao = PageRequest.of(page, size, Sort.by("descricao").ascending());
+        return servicoRepository.findAll(paginacao);
+    }
+
+    public ServicoEntity buscarPorId(Long id) throws NotFoundException {
+        return servicoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Serviço não encontrado no catálogo com o ID: " + id));
+    }
 
 }

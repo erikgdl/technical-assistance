@@ -4,8 +4,16 @@ import com.example.assistencia_tecnica.database.model.ClienteEntity;
 import com.example.assistencia_tecnica.database.repository.IClienteRepository;
 import com.example.assistencia_tecnica.dto.ClienteDto;
 import com.example.assistencia_tecnica.exception.BadRequestException;
+import com.example.assistencia_tecnica.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,11 +29,11 @@ public class ClienteService {
                 .orElse(null);
 
         if (clienteEmail != null) {
-            throw new BadRequestException("Aluno já cadastrado com este e-mail");
+            throw new BadRequestException("Cliente já cadastrado com este e-mail");
         }
 
         if (clienteCpf != null) {
-            throw new BadRequestException("Aluno já cadastrado com este Cpf");
+            throw new BadRequestException("Cliente já cadastrado com este Cpf");
         }
 
         return clienteRepository.save(ClienteEntity.builder()
@@ -36,6 +44,38 @@ public class ClienteService {
                 .build());
     }
 
+    public List<ClienteEntity> getListarCliente() {
+        return clienteRepository.findAll();
+    }
+
+    public ClienteEntity getBuscarPorId(UUID id) throws NotFoundException {
+        return clienteRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Cliente não encontrado com o ID: " + id));
+    }
+
+    public Page<ClienteEntity> listarClientesPaginado(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nome").ascending());
+        return clienteRepository.findAll(pageable);
+    }
+
+    public ClienteEntity getBuscarPorCpf(String cpf) throws NotFoundException {
+        return clienteRepository.findByCpf(cpf)
+                .orElseThrow(() -> new NotFoundException("Cliente não encontrado com o ID: " + cpf));
+    }
+
+    public List<ClienteEntity> getBuscarPorNome(String nome) throws NotFoundException {
+         List<ClienteEntity> cliente = clienteRepository.findByNomeContainingIgnoreCase(nome);
+
+        if (cliente.isEmpty()) {
+            throw new NotFoundException("Cliente não encontrado com o nome: " + nome);
+        }
+        return cliente;
+    }
+
+    public void deletar(UUID id) throws NotFoundException {
+        ClienteEntity cliente = getBuscarPorId(id);
+        clienteRepository.delete(cliente);
+    }
 
 
 }

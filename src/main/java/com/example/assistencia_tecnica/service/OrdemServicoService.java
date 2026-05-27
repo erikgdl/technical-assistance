@@ -7,6 +7,10 @@ import com.example.assistencia_tecnica.enums.StatusServicoEnum;
 import com.example.assistencia_tecnica.exception.BadRequestException;
 import com.example.assistencia_tecnica.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,16 +32,16 @@ public class OrdemServicoService {
     private final IServicoRepository servicoRepository;
     private final IPecaUtilizadaRepository pecaUtilizadaRepository;
 
-    public OrdemServicoEntity abrirOS(OrdemServicoDto dto) {
+    public OrdemServicoEntity abrirOS(OrdemServicoDto dto) throws NotFoundException, BadRequestException {
         ClienteEntity cliente = clienteRepository.findById(dto.getClienteId())
-                .orElseThrow(() -> new RuntimeException("Cliente não encontrado!"));
+                .orElseThrow(() -> new NotFoundException("Cliente não encontrado!"));
 
         EquipamentoEntity equipamento = equipamentoRepository.findById(dto.getEquipamentoId())
-                .orElseThrow(() -> new RuntimeException("Equipamento não encontrado!"));
+                .orElseThrow(() -> new NotFoundException("Equipamento não encontrado!"));
 
 
         if (!equipamento.getCliente().getId().equals(cliente.getId())) {
-            throw new RuntimeException("Este equipamento não pertence ao cliente informado!");
+            throw new BadRequestException("Este equipamento não pertence ao cliente informado!");
         }
 
         OrdemServicoEntity novaOs = OrdemServicoEntity.builder()
@@ -47,23 +51,23 @@ public class OrdemServicoService {
                 .status(StatusServicoEnum.ABERTA)
                 .valorTotal(BigDecimal.ZERO)
                 .dataAbertura(LocalDateTime.now())
-                //.numeroOs(UUID.randomUUID())
+                .numeroOs(UUID.randomUUID())
                 .build();
 
         return ordemServicoRepository.save(novaOs);
     }
 
-    public OrdemServicoEntity iniciarAnalise(UUID ordemServicoId, Long tecnicoId) {
+    public OrdemServicoEntity iniciarAnalise(UUID ordemServicoId, Long tecnicoId) throws NotFoundException, BadRequestException {
 
         OrdemServicoEntity os = ordemServicoRepository.findById(ordemServicoId)
-                .orElseThrow(() -> new RuntimeException("Ordem de Serviço não encontrada!"));
+                .orElseThrow(() -> new NotFoundException("Ordem de Serviço não encontrada!"));
 
 
         TecnicoEntity tecnico = tecnicoRepository.findById(tecnicoId)
-                .orElseThrow(() -> new RuntimeException("Técnico não encontrado com o ID informado!"));
+                .orElseThrow(() -> new NotFoundException("Técnico não encontrado com o ID informado!"));
 
         if (os.getStatus() != StatusServicoEnum.ABERTA) {
-            throw new RuntimeException("só pode ir para análise se estiver com o status ABERTA.");
+            throw new BadRequestException("só pode ir para análise se estiver com o status ABERTA.");
         }
 
         os.setStatus(StatusServicoEnum.EM_ANALISE);
@@ -72,13 +76,13 @@ public class OrdemServicoService {
         return ordemServicoRepository.save(os);
     }
 
-    public OrdemServicoEntity registrarLaudo(UUID ordemServicoId, RegistrarLaudoDto dto) {
+    public OrdemServicoEntity registrarLaudo(UUID ordemServicoId, RegistrarLaudoDto dto) throws NotFoundException, BadRequestException {
 
         OrdemServicoEntity os = ordemServicoRepository.findById(ordemServicoId)
-                .orElseThrow(() -> new RuntimeException("Ordem de Serviço não encontrada!"));
+                .orElseThrow(() -> new NotFoundException("Ordem de Serviço não encontrada!"));
 
         if (os.getStatus() != StatusServicoEnum.EM_ANALISE) {
-            throw new RuntimeException("Só é possível registrar um laudo se estiver EM_ANALISE.");
+            throw new BadRequestException("Só é possível registrar um laudo se estiver EM_ANALISE.");
         }
 
         os.setLaudoTecnico(dto.laudoTecnico());
@@ -88,7 +92,7 @@ public class OrdemServicoService {
     public OrdemServicoEntity adicionarPeca(UUID ordemServicoId, AdicionarPecaDto dto) throws BadRequestException, NotFoundException {
 
         OrdemServicoEntity os = ordemServicoRepository.findById(ordemServicoId)
-                .orElseThrow(() -> new RuntimeException("Ordem de Serviço não encontrada!"));
+                .orElseThrow(() -> new NotFoundException("Ordem de Serviço não encontrada!"));
 
         if (os.getStatus() != StatusServicoEnum.EM_ANALISE) {
             throw new BadRequestException("Não é possível adicionar peças. A OS não está em análise.");
@@ -238,5 +242,40 @@ public class OrdemServicoService {
         os.setValorTotal(os.getValorTotal().add(servico.getPrecoBase()));
 
         return ordemServicoRepository.save(os);
+    }
+
+    public List<OrdemServicoEntity> getListarOrdemServico() {
+        return ordemServicoRepository.findAll();
+    }
+
+    public Page<OrdemServicoEntity> listarTodasPaginado(int page, int size) {
+        Pageable paginacao = PageRequest.of(page, size, Sort.by("dataAbertura").descending());
+        return ordemServicoRepository.findAll(paginacao);
+    }
+
+    public OrdemServicoEntity buscarPorId(UUID id) throws NotFoundException {
+        return ordemServicoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("OS não encontrada com o ID: " + id));
+    }
+
+    public Page<OrdemServicoEntity> buscarPorStatus(StatusServicoEnum status, int page, int size) {
+        Pageable paginacao = PageRequest.of(page, size, Sort.by("dataAbertura").descending());
+        return ordemServicoRepository.findByStatus(status, paginacao);
+    }
+
+    public List<OrdemServicoEntity> buscarPorClienteId(UUID clienteId) {
+        return ordemServicoRepository.findByClienteId(clienteId);
+    }
+
+    public List<OrdemServicoEntity> buscarPorTecnicoId(Long tecnicoId) {
+        return ordemServicoRepository.findByTecnicoId(tecnicoId);
+    }
+
+    public List<PecaUtilizadaEntity> buscarPecasDaOs(UUID osId) {
+        return pecaUtilizadaRepository.findByOrdemServicoId(osId);
+    }
+
+    public List<ServicoRealizadoEntity> buscarServicosDaOs(UUID osId) {
+        return servicoRealizadoRepository.findByOrdemServicoId(osId);
     }
 }

@@ -9,16 +9,19 @@ import com.example.assistencia_tecnica.enums.StatusServicoEnum;
 import com.example.assistencia_tecnica.exception.BadRequestException;
 import com.example.assistencia_tecnica.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class PecaService {
 
-    private final IOrdemServicoRepository ordemServicoRepository;
-    private final IPecaUtilizadaRepository pecaUtilizadaRepository;
     private final IPecaRepository pecaRepository;
 
     public PecaEntity criarPeca(PecaDto pecaDto) {
@@ -29,6 +32,20 @@ public class PecaService {
                 .quantidadeEstoque(pecaDto.getQuantidadeEstoque())
                 .precoUnitario(pecaDto.getPrecoUnitario())
                 .build());
+    }
+
+    public List<PecaEntity> getListarPeca() {
+        return pecaRepository.findAll();
+    }
+
+    public Page<PecaEntity> listarTodasPaginado(int page, int size) {
+        Pageable paginacao = PageRequest.of(page, size, Sort.by("nome").ascending());
+        return pecaRepository.findAll(paginacao);
+    }
+
+    public PecaEntity buscarPorId(Long id) throws NotFoundException {
+        return pecaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Peça não encontrada no estoque com o ID: " + id));
     }
 
 }
