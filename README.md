@@ -1,39 +1,50 @@
 # Assistencia Tecnica API
 
-API REST para gestao de assistencia tecnica com cadastro de clientes, equipamentos, tecnicos, pecas e servicos, e fluxo completo de ordens de servico. Persistencia via PostgreSQL e documentacao OpenAPI.
+API REST para gestao de assistencia tecnica, com cadastro de clientes, equipamentos, tecnicos, pecas, servicos e fluxo completo de ordem de servico.
+
+## Visao geral
+
+- **Base URL:** `http://localhost:8080/v1`
+- **Formato:** JSON (`application/json`)
+- **Autenticacao:** nao implementada
+- **Persistencia:** PostgreSQL
 
 ## Stack
 
 - Java 21
-- Spring Boot 4.0.6 (WebMVC, Data JPA)
-- PostgreSQL
-- Springdoc OpenAPI (Swagger UI)
+- Spring Boot 4.0.6
+- Spring Web MVC
+- Spring Data JPA
+- springdoc-openapi 3.0.2
 - Lombok
+- PostgreSQL Driver
 - JUnit 5
-
-## Requisitos
-
-- JDK 21
-- PostgreSQL
-- Maven Wrapper (mvnw)
 
 ## Estrutura do projeto
 
+```text
+src/
+  main/
+    java/com/example/assistencia_tecnica/
+      controller/
+      service/
+      dto/
+      database/model/
+      database/repository/
+      enums/
+      exception/
+      handler/
+    resources/
+      application.yaml
+  test/
+    java/com/example/assistencia_tecnica/
 ```
-src/main/java/com/example/assistencia_tecnica
-  AssistenciaTecnicaApplication.java
-  controller/
-  service/
-  database/
-    model/
-    repository/
-  dto/
-  enums/
-  exception/
-  handler/
-src/main/resources/application.yaml
-src/test/java/com/example/assistencia_tecnica/AssistenciaTecnicaApplicationTests.java
-```
+
+## Pre-requisitos
+
+- JDK 21
+- Maven 3.9+
+- PostgreSQL em execucao
 
 ## Configuracao
 
@@ -42,6 +53,7 @@ Arquivo: `src/main/resources/application.yaml`
 ```yaml
 server:
   port: 8080
+
 spring:
   application:
     name: assistencia-tecnica
@@ -66,68 +78,159 @@ Variaveis de ambiente obrigatorias:
 
 ## Como executar
 
-1. Suba o PostgreSQL e crie o banco `assistencia_tecnica`.
-2. Configure as variaveis de ambiente do banco.
-3. Execute a aplicacao:
+1. Crie o banco `assistencia_tecnica` no PostgreSQL.
+2. Exporte `DATABASE_USERNAME` e `DATABASE_PASSWORD`.
+3. Inicie a aplicacao:
 
 ```bash
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
-No Windows:
-
-```bash
-.\mvnw.cmd spring-boot:run
-```
-
-Servidor padrao: `http://localhost:8080`
-
-## Documentacao OpenAPI
+## Swagger / OpenAPI
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-## Modelo de dados
+## Organizacao por camada
 
-| Entidade | Chave | Campos principais | Relacionamentos |
+| Camada | Responsabilidade |
+| --- | --- |
+| `controller` | Exposicao dos endpoints HTTP |
+| `service` | Regras de negocio |
+| `dto` | Contratos de entrada |
+| `database/model` | Entidades JPA |
+| `database/repository` | Acesso ao banco |
+| `handler` | Tratamento global de excecoes |
+| `exception` | Excecoes e payload de erro |
+| `enums` | Estados do dominio |
+
+## Modelo de dominio
+
+| Entidade | ID | Principais campos | Relacionamentos |
 | --- | --- | --- | --- |
-| **Cliente** | UUID | `cpf`, `nome`, `telefone`, `email` | 1:N com **Equipamento** |
-| **Equipamento** | UUID | `tipo`, `marca`, `modelo`, `numeroSerie` | N:1 com **Cliente** |
-| **Tecnico** | Long | `matricula`, `nome`, `especialidade` | 1:N com **OrdemServico** |
-| **Peca** | Long | `nome`, `marca`, `quantidadeEstoque`, `precoUnitario` | 1:N via **PecaUtilizada** |
-| **Servico** | Long | `descricao`, `precoBase` | 1:N via **ServicoRealizado** |
-| **OrdemServico** | UUID | `defeitoRelatado`, `laudoTecnico`, `status`, `dataAbertura`, `dataConclusao`, `valorTotal` | N:1 com **Cliente**, **Equipamento**, **Tecnico** |
-| **PecaUtilizada** | Long | `quantidade`, `precoUnitarioMomento` | N:1 com **OrdemServico** e **Peca** |
-| **ServicoRealizado** | Long | `precoCobrado` | N:1 com **OrdemServico** e **Servico** |
+| `ClienteEntity` | UUID | `cpf`, `nome`, `telefone`, `email` | 1:N com `EquipamentoEntity` |
+| `EquipamentoEntity` | UUID | `tipo`, `marca`, `modelo`, `numeroSerie` | N:1 com `ClienteEntity` |
+| `TecnicoEntity` | Long | `matricula`, `nome`, `especialidade` | Nenhum |
+| `PecaEntity` | Long | `nome`, `marca`, `quantidadeEstoque`, `precoUnitario` | Nenhum |
+| `ServicoEntity` | Long | `descricao`, `precoBase` | Nenhum |
+| `OrdemServicoEntity` | UUID | `numeroOs`, `defeitoRelatado`, `laudoTecnico`, `status`, `dataAbertura`, `dataConclusao`, `valorTotal` | N:1 com cliente, equipamento e tecnico |
+| `PecaUtilizadaEntity` | Long | `quantidade`, `precoUnitarioMomento` | N:1 com OS e peca |
+| `ServicoRealizadoEntity` | Long | `precoCobrado` | N:1 com OS e servico |
 
-## API
+## IDs e paginação
 
-**Prefixo:** `/v1`
+- `UUID`: cliente, equipamento e ordem de servico
+- `Long`: tecnico, peca, servico, peca utilizada e servico realizado
+- Listagens paginadas usam `page` e `size`
+- Padrao de pagina: `page=0`, `size=10`
 
-| Metodo | Endpoint | Descricao | Body |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/cliente` | Cadastrar cliente | `ClienteDto` |
-| **POST** | `/equipamento` | Cadastrar equipamento | `EquipamentoDto` |
-| **POST** | `/tecnico` | Cadastrar tecnico | `TecnicoDto` |
-| **POST** | `/peca` | Cadastrar peca em estoque | `PecaDto` |
-| **POST** | `/servico` | Cadastrar servico no catalogo | `ServicoDto` |
-| **POST** | `/ordens-servico` | Abrir OS | `OrdemServicoDto` |
-| **PATCH** | `/ordens-servico/{id}/iniciar-analise/{tecnicoId}` | Iniciar analise | - |
-| **PATCH** | `/ordens-servico/{id}/laudo` | Registrar laudo tecnico | `RegistrarLaudoDto` |
-| **POST** | `/ordens-servico/{id}/pecas` | Adicionar peca a OS | `AdicionarPecaDto` |
-| **POST** | `/ordens-servico/{id}/servicos` | Adicionar servico a OS | `AdicionarServicoDto` |
-| **PATCH** | `/ordens-servico/{id}/enviar-aprovacao` | Enviar OS para aprovacao | - |
-| **PATCH** | `/ordens-servico/{id}/aprovar` | Aprovar OS (abate o estoque) | - |
-| **PATCH** | `/ordens-servico/{id}/iniciar-manutencao` | Iniciar manutencao | - |
-| **PATCH** | `/ordens-servico/{id}/reabrir` | Reabrir OS para nova analise | - |
-| **PATCH** | `/ordens-servico/{id}/concluir` | Concluir manutencao | - |
-| **PATCH** | `/ordens-servico/{id}/entregar` | Entregar equipamento | - |
+Ordenacao aplicada nas listagens paginadas:
 
-Observacao: a API atualmente expoe somente cadastro e fluxo de ordens de servico (nao ha endpoints de listagem/consulta).
+- Cliente: `nome` asc
+- Peca: `nome` asc
+- Servico: `descricao` asc
+- Ordem de servico: `dataAbertura` desc
+- Equipamento: sem ordenacao explicita
 
-## DTOs (requests)
+## Fluxo da ordem de servico
 
-**ClienteDto**
+Status disponiveis no enum:
+
+`ABERTA`, `EM_ANALISE`, `AGUARDANDO_APROVACAO_CLIENTE`, `APROVADA`, `REJEITADA`, `EM_MANUTENCAO`, `CONCLUIDA`, `ENTREGUE`
+
+Transicoes implementadas:
+
+1. Abrir OS: cria com status `ABERTA`, `numeroOs` gerado automaticamente e `valorTotal = 0`.
+2. Iniciar analise: apenas se estiver `ABERTA`; vincula tecnico.
+3. Registrar laudo: apenas se estiver `EM_ANALISE`.
+4. Adicionar peca e servico: apenas se estiver `EM_ANALISE`; soma o valor no total.
+5. Enviar para aprovacao: exige laudo preenchido e `valorTotal > 0`.
+6. Aprovar: apenas se estiver `AGUARDANDO_APROVACAO_CLIENTE`; valida estoque e baixa as pecas.
+7. Iniciar manutencao: apenas se estiver `APROVADA`.
+8. Concluir manutencao: apenas se estiver `EM_MANUTENCAO`; registra `dataConclusao`.
+9. Entregar equipamento: apenas se estiver `CONCLUIDA`.
+10. Reabrir OS: permitido apenas fora de `CONCLUIDA` e `ENTREGUE`.
+
+## Endpoints
+
+### Cliente
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| POST | `/v1/cliente` | Cadastra cliente |
+| GET | `/v1/cliente/todos` | Lista todos |
+| GET | `/v1/cliente` | Lista paginada |
+| GET | `/v1/cliente/{id}` | Busca por ID |
+| GET | `/v1/cliente/cpf/{cpf}` | Busca por CPF |
+| GET | `/v1/cliente/busca?nome=...` | Busca por nome |
+| DELETE | `/v1/cliente/{id}` | Remove cliente |
+
+### Equipamento
+
+| Metodo | Endpoint | Descricao                      |
+| --- | --- |--------------------------------|
+| POST | `/v1/equipamento` | Cadastra equipamento           |
+| GET | `/v1/equipamento/todos` | Lista todos                    |
+| GET | `/v1/equipamento` | Lista paginada                 |
+| GET | `/v1/equipamento/{id}` | Busca por ID                   |
+| GET | `/v1/equipamento/cliente/{clienteId}` | Lista por cliente              |
+| GET | `/v1/equipamento/numero-serie/{numeroSerie}` | Busca por numero de serie IMEI |
+
+### Tecnico
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| POST | `/v1/tecnico` | Cadastra tecnico |
+| GET | `/v1/tecnico/todos` | Lista todos |
+| GET | `/v1/tecnico/{id}` | Busca por ID |
+| GET | `/v1/tecnico/matricula/{matricula}` | Busca por matricula |
+
+### Peca
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| POST | `/v1/peca` | Cadastra peca |
+| GET | `/v1/peca/todos` | Lista todas |
+| GET | `/v1/peca` | Lista paginada |
+| GET | `/v1/peca/{id}` | Busca por ID |
+
+### Servico
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| POST | `/v1/servico` | Cadastra servico |
+| GET | `/v1/servico/todos` | Lista todos |
+| GET | `/v1/servico` | Lista paginada |
+| GET | `/v1/servico/{id}` | Busca por ID |
+
+### Ordem de servico
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| POST | `/v1/ordens-servico` | Abre OS |
+| GET | `/v1/ordens-servico/todos` | Lista todas |
+| GET | `/v1/ordens-servico` | Lista paginada |
+| GET | `/v1/ordens-servico/{id}` | Busca por ID |
+| GET | `/v1/ordens-servico/status/{status}` | Busca por status |
+| GET | `/v1/ordens-servico/cliente/{clienteId}` | Busca por cliente |
+| GET | `/v1/ordens-servico/tecnico/{tecnicoId}` | Busca por tecnico |
+| GET | `/v1/ordens-servico/{id}/pecas` | Lista pecas usadas na OS |
+| GET | `/v1/ordens-servico/{id}/servicos` | Lista servicos da OS |
+| PATCH | `/v1/ordens-servico/{id}/iniciar-analise/{tecnicoId}` | Inicia analise |
+| PATCH | `/v1/ordens-servico/{id}/laudo` | Registra laudo tecnico |
+| POST | `/v1/ordens-servico/{id}/pecas` | Adiciona peca na OS |
+| POST | `/v1/ordens-servico/{id}/servicos` | Adiciona servico na OS |
+| PATCH | `/v1/ordens-servico/{id}/enviar-aprovacao` | Envia para aprovacao |
+| PATCH | `/v1/ordens-servico/{id}/aprovar` | Aprova e baixa estoque |
+| PATCH | `/v1/ordens-servico/{id}/iniciar-manutencao` | Inicia manutencao |
+| PATCH | `/v1/ordens-servico/{id}/reabrir` | Reabre a OS |
+| PATCH | `/v1/ordens-servico/{id}/concluir` | Conclui manutencao |
+| PATCH | `/v1/ordens-servico/{id}/entregar` | Marca como entregue |
+
+## DTOs principais
+
+### ClienteDto
+
 ```json
 {
   "cpf": "12345678901",
@@ -137,7 +240,15 @@ Observacao: a API atualmente expoe somente cadastro e fluxo de ordens de servico
 }
 ```
 
-**EquipamentoDto**
+Validacoes:
+
+- `cpf`: obrigatorio, 11 digitos, CPF valido
+- `nome`: obrigatorio
+- `telefone`: obrigatorio, formato `(11) 91234-5678` ou `(11) 1234-5678`
+- `email`: obrigatorio e valido
+
+### EquipamentoDto
+
 ```json
 {
   "clienteId": "e6b8c1a0-5f28-4b8a-8b5f-9c7a0e4d2f55",
@@ -148,7 +259,8 @@ Observacao: a API atualmente expoe somente cadastro e fluxo de ordens de servico
 }
 ```
 
-**TecnicoDto** (matricula gerada automaticamente)
+### TecnicoDto
+
 ```json
 {
   "nome": "Maria Souza",
@@ -156,25 +268,30 @@ Observacao: a API atualmente expoe somente cadastro e fluxo de ordens de servico
 }
 ```
 
-**PecaDto** (o campo `pecaId` e ignorado no cadastro)
+### PecaDto
+
 ```json
 {
+  "pecaId": 1,
   "nome": "Teclado",
   "marca": "Gen",
   "quantidadeEstoque": 10,
-  "precoUnitario": 120.50
+  "precoUnitario": 120.5
 }
 ```
 
-**ServicoDto** (o campo `id` e ignorado no cadastro)
+### ServicoDto
+
 ```json
 {
+  "id": 1,
   "descricao": "Troca de teclado",
-  "precoBase": 150.00
+  "precoBase": 150.0
 }
 ```
 
-**OrdemServicoDto**
+### OrdemServicoDto
+
 ```json
 {
   "clienteId": "e6b8c1a0-5f28-4b8a-8b5f-9c7a0e4d2f55",
@@ -183,7 +300,16 @@ Observacao: a API atualmente expoe somente cadastro e fluxo de ordens de servico
 }
 ```
 
-**AdicionarPecaDto**
+### RegistrarLaudoDto
+
+```json
+{
+  "laudoTecnico": "Fonte queimada"
+}
+```
+
+### AdicionarPecaDto
+
 ```json
 {
   "pecaId": 1,
@@ -191,54 +317,49 @@ Observacao: a API atualmente expoe somente cadastro e fluxo de ordens de servico
 }
 ```
 
-**AdicionarServicoDto**
+### AdicionarServicoDto
+
 ```json
 {
   "id": 1
 }
 ```
 
-**RegistrarLaudoDto**
-```json
-{
-  "laudoTecnico": "Fonte queimada"
-}
-```
+## Observacoes sobre os DTOs
 
-### Validacoes principais
+- `PecaDto` expoe `pecaId`, mas a criacao atual da peca usa apenas `nome`, `marca`, `quantidadeEstoque` e `precoUnitario`.
+- `ServicoDto` expoe `id`, mas a criacao atual do servico usa apenas `descricao` e `precoBase`.
+- `ClienteEntity` possui a relacao com equipamentos, mas ela nao e serializada no JSON por causa de `@JsonIgnore`.
 
-- `ClienteDto.cpf` deve ter 11 digitos e ser um CPF valido.
-- `ClienteDto.telefone` deve seguir o padrao `(11) 91234-5678`.
-- `PecaDto.quantidadeEstoque` >= 0 e `precoUnitario` >= 0.
-- `ServicoDto.precoBase` >= 0.
-- `AdicionarPecaDto.pecaId` deve ser positivo.
-- `AdicionarServicoDto.id` deve ser positivo.
-- `RegistrarLaudoDto.laudoTecnico` nao pode estar em branco.
+## Simulação de Fluxo: Do Atendimento à Entrega
 
-## Fluxo de Ordem de Servico
+Abaixo está a sequência cronológica exata de chamadas à API simulando um atendimento real.
 
-Status possiveis:
+| Passo | Metodo | Endpoint | Descricao |
+| :--- | :--- | :--- | :--- |
+| **1** | POST | `/v1/clientes` | Cadastra o cliente no balcão |
+| **2** | POST | `/v1/equipamentos` | Vincula o aparelho quebrado ao cliente |
+| **3** | POST | `/v1/tecnicos` | Cadastra o técnico que fará o serviço |
+| **4** | POST | `/v1/pecas` | Cadastra a peça necessária no estoque |
+| **5** | POST | `/v1/servicos` | Cadastra a mão de obra no catálogo |
+| **6** | POST | `/v1/ordens-servico` | Abre a OS inicial (Status: ABERTA) |
+| **7** | PATCH| `/v1/ordens-servico/{id}/iniciar-analise/{tecnicoId}`| Técnico pega o aparelho (EM_ANALISE) |
+| **8** | POST | `/v1/ordens-servico/{id}/pecas` | Adiciona a peça ao orçamento da OS |
+| **9** | POST | `/v1/ordens-servico/{id}/servicos` | Adiciona a mão de obra ao orçamento |
+| **10**| PATCH| `/v1/ordens-servico/{id}/laudo` | Técnico registra o defeito encontrado |
+| **11**| PATCH| `/v1/ordens-servico/{id}/enviar-aprovacao` | Envia orçamento (AGUARDANDO_APROVACAO) |
+| **12**| PATCH| `/v1/ordens-servico/{id}/aprovar` | Cliente aprova e abate a peça do estoque |
+| **13**| PATCH| `/v1/ordens-servico/{id}/iniciar-manutencao` | Inicia o conserto físico na bancada |
+| **14**| PATCH| `/v1/ordens-servico/{id}/concluir` | Finaliza conserto e gera data de conclusão |
+| **15**| PATCH| `/v1/ordens-servico/{id}/entregar` | Cliente paga e retira o aparelho (ENTREGUE) |
 
-`ABERTA -> EM_ANALISE -> AGUARDANDO_APROVACAO_CLIENTE -> APROVADA -> EM_MANUTENCAO -> CONCLUIDA -> ENTREGUE`
+> 💡 **Nota:** O `{id}` utilizado dos passos 7 ao 15 é o **UUID da Ordem de Serviço** gerado automaticamente no **Passo 6**. Basta 
+> copiar o ID retornado na resposta do Passo 6 e usá-lo nas URLs dos passos seguintes.
 
-Existe o status `REJEITADA` no enum, mas nao ha endpoint para transicionar para ele.
+## Erros e respostas
 
-Regras principais (conforme service):
+O handler global retorna:
 
-- **Abrir OS:** cliente e equipamento precisam existir e estar relacionados. Status inicial `ABERTA`, `valorTotal = 0` e `dataAbertura` com a data atual.
-- **Iniciar analise:** somente se a OS estiver `ABERTA`; tecnico e vinculado.
-- **Registrar laudo:** somente se a OS estiver `EM_ANALISE`.
-- **Adicionar pecas/servicos:** somente se a OS estiver `EM_ANALISE`. Para pecas, valida estoque suficiente e soma no `valorTotal`.
-- **Enviar para aprovacao:** somente se `EM_ANALISE`, com laudo preenchido e `valorTotal > 0`.
-- **Aprovar OS:** somente se `AGUARDANDO_APROVACAO_CLIENTE`; valida estoque e abate as pecas.
-- **Iniciar manutencao:** somente se `APROVADA`.
-- **Reabrir OS:** permitido desde que a OS nao esteja `CONCLUIDA` ou `ENTREGUE`; volta para `EM_ANALISE`.
-- **Concluir manutencao:** somente se `EM_MANUTENCAO`; define `dataConclusao`.
-- **Entregar equipamento:** somente se `CONCLUIDA`.
-
-## Erros
-
-Resposta padrao para erros de negocio e "not found":
 ```json
 {
   "message": "Descricao do erro",
@@ -246,16 +367,17 @@ Resposta padrao para erros de negocio e "not found":
 }
 ```
 
-Codigos mais comuns:
+Codigos tratados explicitamente:
 
-- **400**: regra de negocio (BadRequestException)
-- **404**: recurso nao encontrado (NotFoundException)
-- **500**: erro nao tratado (Exception)
+- `400` para `BadRequestException`
+- `404` para `NotFoundException`
+- `500` para `Exception` generica
 
-Observacao: erros de validacao (`@Valid`) seguem o formato padrao do Spring.
+Validacoes Bean Validation (`@Valid`) usam o retorno padrao do Spring.
 
-## Build e testes
+## Testes
 
-```bash
-./mvnw clean test
-```
+O projeto possui apenas o teste padrao de contexto:
+
+- `src/test/java/com/example/assistencia_tecnica/AssistenciaTecnicaApplicationTests.java`
+
