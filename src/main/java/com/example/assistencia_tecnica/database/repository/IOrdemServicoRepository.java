@@ -17,4 +17,5 @@ public interface IOrdemServicoRepository extends JpaRepository<OrdemServicoEntit
 
     List<OrdemServicoEntity> findByTecnicoId(Long tecnicoId);
 
+    Long countByStatus(StatusServicoEnum status);
 }
