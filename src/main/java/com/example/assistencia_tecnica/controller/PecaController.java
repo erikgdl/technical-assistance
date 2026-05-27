@@ -1,20 +1,18 @@
 package com.example.assistencia_tecnica.controller;
 
 import com.example.assistencia_tecnica.database.model.PecaEntity;
-import com.example.assistencia_tecnica.database.model.TecnicoEntity;
 import com.example.assistencia_tecnica.dto.PecaDto;
-import com.example.assistencia_tecnica.dto.TecnicoDto;
+import com.example.assistencia_tecnica.exception.NotFoundException;
 import com.example.assistencia_tecnica.service.PecaService;
-import com.example.assistencia_tecnica.service.TecnicoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("v1/peca")
@@ -28,5 +26,23 @@ public class PecaController {
     public ResponseEntity<PecaEntity> cadastrarPeca(@RequestBody @Valid PecaDto dto) {
         PecaEntity novaPeca = pecaService.criarPeca(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(novaPeca);
+    }
+
+    @GetMapping("/todos")
+    public ResponseEntity<List<PecaEntity>> listarPecas() {
+        List<PecaEntity> peca = pecaService.getListarPeca();
+        return ResponseEntity.status(HttpStatus.OK).body(peca);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<PecaEntity>> listarTodasPaginado(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(pecaService.listarTodasPaginado(page, size));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PecaEntity> buscarPorId(@PathVariable("id") Long id) throws NotFoundException {
+        return ResponseEntity.ok(pecaService.buscarPorId(id));
     }
 }
