@@ -12,4 +12,8 @@ public interface IServicoRealizadoRepository extends JpaRepository<ServicoRealiz
 
     @Query("SELECT s FROM ServicoRealizadoEntity s WHERE s.ordemServicoId.id = :osId")
     List<ServicoRealizadoEntity> findByOrdemServicoId(@Param("osId") UUID osId);
+
+    void deleteByOrdemServicoId_Id(UUID ordemServicoId);
+
+    void deleteByServicoId_Id(Long servicoId);
 }

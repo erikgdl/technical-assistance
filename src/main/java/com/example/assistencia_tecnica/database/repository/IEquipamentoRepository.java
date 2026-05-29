@@ -11,6 +11,8 @@ public interface IEquipamentoRepository extends JpaRepository<EquipamentoEntity,
 
     List<EquipamentoEntity> findByClienteId(UUID id);
 
+    void deleteByClienteId(UUID clienteId);
+
     Optional<EquipamentoEntity> findByNumeroSerie(String numeroSerie);
 
 }
