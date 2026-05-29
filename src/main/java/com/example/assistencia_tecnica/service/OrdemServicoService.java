@@ -51,7 +51,6 @@ public class OrdemServicoService {
                 .status(StatusServicoEnum.ABERTA)
                 .valorTotal(BigDecimal.ZERO)
                 .dataAbertura(LocalDateTime.now())
-                .numeroOs(UUID.randomUUID())
                 .build();
 
         return ordemServicoRepository.save(novaOs);
@@ -89,6 +88,7 @@ public class OrdemServicoService {
         return ordemServicoRepository.save(os);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public OrdemServicoEntity adicionarPeca(UUID ordemServicoId, AdicionarPecaDto dto) throws BadRequestException, NotFoundException {
 
         OrdemServicoEntity os = ordemServicoRepository.findById(ordemServicoId)
@@ -101,20 +101,26 @@ public class OrdemServicoService {
         PecaEntity peca = pecaRepository.findById(dto.pecaId())
                 .orElseThrow(() -> new NotFoundException("Peca informado."));
 
-        if (peca.getQuantidadeEstoque() < dto.quantidadeEstoque()) {
+        int quantidadeSolicitada = dto.quantidadeEstoque();
+
+        if (peca.getQuantidadeEstoque() < quantidadeSolicitada) {
             throw new BadRequestException("Estoque insuficiente! Temos apenas " + peca.getQuantidadeEstoque() + " unidades disponíveis.");
         }
+
+        int novoEstoque = peca.getQuantidadeEstoque() - quantidadeSolicitada;
+        peca.setQuantidadeEstoque(novoEstoque);
+        pecaRepository.save(peca);
 
         PecaUtilizadaEntity pecaUtilizada = PecaUtilizadaEntity.builder()
                 .ordemServicoId(os)
                 .PecaId(peca)
-                .quantidade(dto.quantidadeEstoque())
+                .quantidade(quantidadeSolicitada)
                 .precoUnitarioMomento(peca.getPrecoUnitario())
                 .build();
 
         pecaUtilizadaRepository.save(pecaUtilizada);
 
-        BigDecimal totalDestaPeca = peca.getPrecoUnitario().multiply(new BigDecimal(dto.quantidadeEstoque()));
+        BigDecimal totalDestaPeca = peca.getPrecoUnitario().multiply(new BigDecimal(quantidadeSolicitada));
 
         os.setValorTotal(os.getValorTotal().add(totalDestaPeca));
 
@@ -148,21 +154,6 @@ public class OrdemServicoService {
 
         if (os.getStatus() != StatusServicoEnum.AGUARDANDO_APROVACAO_CLIENTE) {
             throw new BadRequestException("A OS não está aguardando aprovação do cliente.");
-        }
-
-        List<PecaUtilizadaEntity> pecasDaOs = pecaUtilizadaRepository.findByOrdemServicoId(ordemServicoId);
-
-        for (PecaUtilizadaEntity item : pecasDaOs) {
-            PecaEntity pecaNoBanco = item.getPecaId();
-
-            if (pecaNoBanco.getQuantidadeEstoque() < item.getQuantidade()) {
-                throw new BadRequestException("Estoque insuficiente para a peça: " + pecaNoBanco.getNome() + ". Aprovação cancelada.");
-            }
-
-            int novoEstoque = pecaNoBanco.getQuantidadeEstoque() - item.getQuantidade();
-            pecaNoBanco.setQuantidadeEstoque(novoEstoque);
-
-            pecaRepository.save(pecaNoBanco);
         }
 
         os.setStatus(StatusServicoEnum.APROVADA);

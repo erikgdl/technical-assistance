@@ -63,4 +63,14 @@ public class EquipamentoService {
                 .orElseThrow(() -> new NotFoundException("Aparelho não encontrado com o Nº de Série: " + numeroSerie));
     }
 
+    public EquipamentoEntity atualizarEquipamento(UUID id, EquipamentoDto dto) throws NotFoundException {
+        EquipamentoEntity equipamentoExistente = equipamentoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Equipamento não encontrado"));
+
+        equipamentoExistente.setMarca(dto.getMarca());
+        equipamentoExistente.setModelo(dto.getModelo());
+        equipamentoExistente.setNumeroSerie(dto.getNumeroSerie());
+        return equipamentoRepository.save(equipamentoExistente);
+    }
+
 }

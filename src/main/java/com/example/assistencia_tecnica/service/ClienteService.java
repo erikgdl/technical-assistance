@@ -77,5 +77,17 @@ public class ClienteService {
         clienteRepository.delete(cliente);
     }
 
+    public ClienteEntity atualizarCliente(UUID id, ClienteDto dto) throws NotFoundException {
+        ClienteEntity clienteExistente = clienteRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Cliente não encontrado"));
+
+        clienteExistente.setNome(dto.getNome());
+        clienteExistente.setCpf(dto.getCpf());
+        clienteExistente.setTelefone(dto.getTelefone());
+        clienteExistente.setEmail(dto.getEmail());
+
+        return clienteRepository.save(clienteExistente);
+    }
+
 
 }

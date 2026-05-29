@@ -47,4 +47,14 @@ public class ServicoService {
                 .orElseThrow(() -> new NotFoundException("Serviço não encontrado no catálogo com o ID: " + id));
     }
 
+    public ServicoEntity atualizarServico(Long id, ServicoDto dto) throws NotFoundException {
+        ServicoEntity servicoExistente = servicoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Serviço não encontrado"));
+
+        servicoExistente.setDescricao(dto.getDescricao());
+        servicoExistente.setPrecoBase(dto.getPrecoBase());
+
+        return servicoRepository.save(servicoExistente);
+    }
+
 }

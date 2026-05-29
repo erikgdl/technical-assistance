@@ -48,4 +48,16 @@ public class PecaService {
                 .orElseThrow(() -> new NotFoundException("Peça não encontrada no estoque com o ID: " + id));
     }
 
+
+    public PecaEntity atualizarPeca(Long id, PecaDto dto) throws NotFoundException {
+        PecaEntity pecaExistente = pecaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Peça não encontrado"));
+
+        pecaExistente.setNome(dto.getNome());
+        pecaExistente.setMarca(dto.getMarca());
+        pecaExistente.setPrecoUnitario(dto.getPrecoUnitario());
+        pecaExistente.setQuantidadeEstoque(dto.getQuantidadeEstoque());
+
+        return pecaRepository.save(pecaExistente);
+    }
 }

@@ -50,5 +50,14 @@ public class TecnicoService {
                 .orElseThrow(() -> new NotFoundException("Cliente não encontrado com o ID: " + matricula));
     }
 
+    public TecnicoEntity atualizarTecnico(Long id, TecnicoDto dto) throws NotFoundException {
+        TecnicoEntity tecnicoExistente = tecnicoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Técnico não encontrado"));
+
+        tecnicoExistente.setNome(dto.getNome());
+        tecnicoExistente.setEspecialidade(dto.getEspecialidade());
+        return tecnicoRepository.save(tecnicoExistente);
+    }
+
 
 }
