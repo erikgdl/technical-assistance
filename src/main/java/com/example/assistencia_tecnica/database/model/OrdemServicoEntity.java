@@ -21,9 +21,6 @@ public class OrdemServicoEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "numero_os", nullable = false, unique = true)
-    private UUID numeroOs;
-
     @Column(name = "defeito_relatado", nullable = false, columnDefinition = "TEXT")
     private String defeitoRelatado;
 
