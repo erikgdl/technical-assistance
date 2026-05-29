@@ -23,21 +23,30 @@ API REST para gestão de assistência técnica, com cadastro de clientes, equipa
 ## Estrutura do projeto
 
 ```text
-src/
-  main/
-    java/com/example/assistencia_tecnica/
-      controller/
-      service/
-      dto/
-      database/model/
-      database/repository/
-      enums/
-      exception/
-      handler/
-    resources/
-      application.yaml
-  test/
-    java/com/example/assistencia_tecnica/
+.
+|-- Dockerfile
+|-- docker-compose.yml
+|-- pom.xml
+|-- README.md
+|-- src
+|   |-- main
+|   |   |-- java/com/example/assistencia_tecnica
+|   |   |   |-- AssistenciaTecnicaApplication.java
+|   |   |   |-- config/
+|   |   |   |-- controller/
+|   |   |   |-- database/
+|   |   |   |   |-- model/
+|   |   |   |   |-- repository/
+|   |   |   |-- dto/
+|   |   |   |-- enums/
+|   |   |   |-- exception/
+|   |   |   |-- handler/
+|   |   |   |-- service/
+|   |   |-- resources/
+|   |       |-- application.yaml
+|   |-- test
+|       |-- java/com/example/assistencia_tecnica/AssistenciaTecnicaApplicationTests.java
+|-- target/
 ```
 
 ## Pré-requisitos
@@ -45,6 +54,7 @@ src/
 - JDK 21
 - Maven 3.9+
 - PostgreSQL em execução
+- Docker e Docker Compose (opcional para execução em containers)
 
 ## Configuração
 
@@ -76,6 +86,15 @@ Variáveis de ambiente obrigatórias:
 - `DATABASE_USERNAME`
 - `DATABASE_PASSWORD`
 
+> Ao usar Docker Compose, as credenciais são fornecidas por `DB_USERNAME` e `DB_PASSWORD` (ver seção Docker).
+
+## CORS
+
+Origens permitidas (configurado em `CorsConfig`):
+
+- `http://localhost:5173`
+- `https://technical-assistance-now.netlify.app`
+
 ## Como executar
 
 1. Crie o banco `assistencia_tecnica` no PostgreSQL.
@@ -84,6 +103,12 @@ Variáveis de ambiente obrigatórias:
 
 ```bash
 mvn spring-boot:run
+```
+
+Para rodar os testes:
+
+```bash
+mvn test
 ```
 
 ## Swagger / OpenAPI
@@ -103,6 +128,7 @@ mvn spring-boot:run
 | `handler` | Tratamento global de exceções |
 | `exception` | Exceções e payload de erro |
 | `enums` | Estados do domínio |
+| `config` | Configurações da aplicação (ex.: CORS) |
 
 ## Modelo de domínio
 
@@ -113,7 +139,7 @@ mvn spring-boot:run
 | `TecnicoEntity` | Long | `matricula`, `nome`, `especialidade` | Nenhum |
 | `PecaEntity` | Long | `nome`, `marca`, `quantidadeEstoque`, `precoUnitario` | Nenhum |
 | `ServicoEntity` | Long | `descricao`, `precoBase` | Nenhum |
-| `OrdemServicoEntity` | UUID | `numeroOs`, `defeitoRelatado`, `laudoTecnico`, `status`, `dataAbertura`, `dataConclusao`, `valorTotal` | N:1 com cliente, equipamento e técnico |
+| `OrdemServicoEntity` | UUID | `defeitoRelatado`, `laudoTecnico`, `status`, `dataAbertura`, `dataConclusao`, `valorTotal` | N:1 com cliente, equipamento e técnico |
 | `PecaUtilizadaEntity` | Long | `quantidade`, `precoUnitarioMomento` | N:1 com OS e peça |
 | `ServicoRealizadoEntity` | Long | `precoCobrado` | N:1 com OS e serviço |
 
@@ -140,16 +166,17 @@ Status disponíveis no enum:
 
 Transições implementadas:
 
-1. Abrir OS: cria com status `ABERTA`, `numeroOs` gerado automaticamente e `valorTotal = 0`.
+1. Abrir OS: cria com status `ABERTA`, `valorTotal = 0` e `dataAbertura`.
 2. Iniciar análise: apenas se estiver `ABERTA`; vincula técnico.
 3. Registrar laudo: apenas se estiver `EM_ANALISE`.
-4. Adicionar peça e serviço: apenas se estiver `EM_ANALISE`; soma o valor no total.
-5. Enviar para aprovação: exige laudo preenchido e `valorTotal > 0`.
-6. Aprovar: apenas se estiver `AGUARDANDO_APROVACAO_CLIENTE`; valida estoque e baixa as peças.
-7. Iniciar manutenção: apenas se estiver `APROVADA`.
-8. Concluir manutenção: apenas se estiver `EM_MANUTENCAO`; registra `dataConclusao`.
-9. Entregar equipamento: apenas se estiver `CONCLUIDA`.
-10. Reabrir OS: permitido apenas fora de `CONCLUIDA` e `ENTREGUE`.
+4. Adicionar peça: apenas se estiver `EM_ANALISE`; valida estoque, baixa o estoque e soma no total.
+5. Adicionar serviço: apenas se estiver `EM_ANALISE`; soma no total.
+6. Enviar para aprovação: exige laudo preenchido e `valorTotal > 0`.
+7. Aprovar: apenas se estiver `AGUARDANDO_APROVACAO_CLIENTE`.
+8. Iniciar manutenção: apenas se estiver `APROVADA`.
+9. Concluir manutenção: apenas se estiver `EM_MANUTENCAO`; registra `dataConclusao`.
+10. Entregar equipamento: apenas se estiver `CONCLUIDA`.
+11. Reabrir OS: permitido apenas fora de `CONCLUIDA` e `ENTREGUE`; volta para `EM_ANALISE`.
 
 ## Endpoints
 
@@ -158,6 +185,7 @@ Transições implementadas:
 | Metodo | Endpoint | Descricao |
 | --- | --- | --- |
 | POST | `/v1/cliente` | Cadastra cliente |
+| PUT | `/v1/cliente/atualiza/{id}` | Atualiza cliente |
 | GET | `/v1/cliente/todos` | Lista todos |
 | GET | `/v1/cliente` | Lista paginada |
 | GET | `/v1/cliente/{id}` | Busca por ID |
@@ -170,11 +198,13 @@ Transições implementadas:
 | Método | Endpoint | Descrição                      |
 | --- | --- |--------------------------------|
 | POST | `/v1/equipamento` | Cadastra equipamento           |
+| PUT | `/v1/equipamento/atualiza/{id}` | Atualiza equipamento          |
 | GET | `/v1/equipamento/todos` | Lista todos                    |
 | GET | `/v1/equipamento` | Lista paginada                 |
 | GET | `/v1/equipamento/{id}` | Busca por ID                   |
 | GET | `/v1/equipamento/cliente/{clienteId}` | Lista por cliente              |
 | GET | `/v1/equipamento/numero-serie/{numeroSerie}` | Busca por número de série IMEI |
+| DELETE | `/v1/equipamento/{id}` | Remove equipamento |
 
 ### Técnico
 
@@ -182,8 +212,10 @@ Transições implementadas:
 | --- | --- | --- |
 | POST | `/v1/tecnico` | Cadastra técnico |
 | GET | `/v1/tecnico/todos` | Lista todos |
+| PUT | `/v1/tecnico/atualiza/{id}` | Atualiza técnico |
 | GET | `/v1/tecnico/{id}` | Busca por ID |
 | GET | `/v1/tecnico/matricula/{matricula}` | Busca por matrícula |
+| DELETE | `/v1/tecnico/{id}` | Remove técnico |
 
 ### Peça
 
@@ -191,8 +223,10 @@ Transições implementadas:
 | --- | --- | --- |
 | POST | `/v1/peca` | Cadastra peça |
 | GET | `/v1/peca/todos` | Lista todas |
+| PUT | `/v1/peca/atualiza/{id}` | Atualiza peça |
 | GET | `/v1/peca` | Lista paginada |
 | GET | `/v1/peca/{id}` | Busca por ID |
+| DELETE | `/v1/peca/{id}` | Remove peça |
 
 ### Serviço
 
@@ -200,8 +234,10 @@ Transições implementadas:
 | --- | --- | --- |
 | POST | `/v1/servico` | Cadastra serviço |
 | GET | `/v1/servico/todos` | Lista todos |
+| PUT | `/v1/servico/atualiza/{id}` | Atualiza serviço |
 | GET | `/v1/servico` | Lista paginada |
 | GET | `/v1/servico/{id}` | Busca por ID |
+| DELETE | `/v1/servico/{id}` | Remove serviço |
 
 ### Ordem de serviço
 
@@ -226,6 +262,24 @@ Transições implementadas:
 | PATCH | `/v1/ordens-servico/{id}/reabrir` | Reabre a OS |
 | PATCH | `/v1/ordens-servico/{id}/concluir` | Conclui manutenção |
 | PATCH | `/v1/ordens-servico/{id}/entregar` | Marca como entregue |
+| DELETE | `/v1/ordens-servico/{id}` | Remove a OS |
+
+### Dashboard
+
+| Método | Endpoint | Descrição |
+| --- | --- | --- |
+| GET | `/v1/dashboard` | Retorna dados agregados do sistema |
+
+Exemplo de resposta:
+
+```json
+{
+  "totalOS": 128,
+  "totalCliente": 64,
+  "totalOSAberta": 12,
+  "totalOSEmManutencao": 5
+}
+```
 
 ## DTOs principais
 
@@ -330,6 +384,7 @@ Validações:
 - `PecaDto` expõe `pecaId`, mas a criação atual da peça usa apenas `nome`, `marca`, `quantidadeEstoque` e `precoUnitario`.
 - `ServicoDto` expõe `id`, mas a criação atual do serviço usa apenas `descricao` e `precoBase`.
 - `ClienteEntity` possui a relação com equipamentos, mas ela não é serializada no JSON por causa de `@JsonIgnore`.
+- `TecnicoEntity` gera `matricula` automaticamente no cadastro (5 dígitos).
 
 ## Simulação de Fluxo: Do Atendimento à Entrega
 
@@ -337,11 +392,11 @@ Abaixo está a sequência cronológica exata de chamadas à API simulando um ate
 
 | Passo | Método | Endpoint | Descrição |
 | :--- | :--- | :--- | :--- |
-| **1** | POST | `/v1/clientes` | Cadastra o cliente no balcão |
-| **2** | POST | `/v1/equipamentos` | Vincula o aparelho quebrado ao cliente |
-| **3** | POST | `/v1/tecnicos` | Cadastra o técnico que fará o serviço |
-| **4** | POST | `/v1/pecas` | Cadastra a peça necessária no estoque |
-| **5** | POST | `/v1/servicos` | Cadastra a mão de obra no catálogo |
+| **1** | POST | `/v1/cliente` | Cadastra o cliente no balcão |
+| **2** | POST | `/v1/equipamento` | Vincula o aparelho quebrado ao cliente |
+| **3** | POST | `/v1/tecnico` | Cadastra o técnico que fará o serviço |
+| **4** | POST | `/v1/peca` | Cadastra a peça necessária no estoque |
+| **5** | POST | `/v1/servico` | Cadastra a mão de obra no catálogo |
 | **6** | POST | `/v1/ordens-servico` | Abre a OS inicial (Status: ABERTA) |
 | **7** | PATCH| `/v1/ordens-servico/{id}/iniciar-analise/{tecnicoId}`| Técnico pega o aparelho (EM_ANALISE) |
 | **8** | POST | `/v1/ordens-servico/{id}/pecas` | Adiciona a peça ao orçamento da OS |
