@@ -17,11 +17,11 @@ public class DashboardService {
 
     public DashboardResponseDto obterDadosDashboard() {
 
-        long totalCliente = clienteRepository.count();
-        long totalOs = ordemServicoRepository.count();
+        Long totalCliente = clienteRepository.count();
+        Long totalOs = ordemServicoRepository.count();
 
-        long abertas = ordemServicoRepository.countByStatus(StatusServicoEnum.valueOf("ABERTA"));
-        long emManutencao = ordemServicoRepository.countByStatus(StatusServicoEnum.valueOf("EM_MANUTENCAO"));
+        Long abertas = ordemServicoRepository.countByStatus(StatusServicoEnum.valueOf("ABERTA"));
+        Long emManutencao = ordemServicoRepository.countByStatus(StatusServicoEnum.valueOf("EM_MANUTENCAO"));
 
         return new DashboardResponseDto(totalOs, totalCliente, abertas, emManutencao);
     }

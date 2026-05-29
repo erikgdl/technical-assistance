@@ -1,12 +1,9 @@
 package com.example.assistencia_tecnica.service;
 
-import com.example.assistencia_tecnica.database.model.*;
-import com.example.assistencia_tecnica.database.repository.IOrdemServicoRepository;
+import com.example.assistencia_tecnica.database.model.PecaEntity;
 import com.example.assistencia_tecnica.database.repository.IPecaRepository;
 import com.example.assistencia_tecnica.database.repository.IPecaUtilizadaRepository;
 import com.example.assistencia_tecnica.dto.PecaDto;
-import com.example.assistencia_tecnica.enums.StatusServicoEnum;
-import com.example.assistencia_tecnica.exception.BadRequestException;
 import com.example.assistencia_tecnica.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,8 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -23,6 +20,7 @@ import java.util.List;
 public class PecaService {
 
     private final IPecaRepository pecaRepository;
+    private final IPecaUtilizadaRepository pecaUtilizadaRepository;
 
     public PecaEntity criarPeca(PecaDto pecaDto) {
 
@@ -48,6 +46,16 @@ public class PecaService {
                 .orElseThrow(() -> new NotFoundException("Peça não encontrada no estoque com o ID: " + id));
     }
 
+    @Transactional
+    public void deletar(Long id) throws NotFoundException {
+        if (!pecaRepository.existsById(id)) {
+            throw new NotFoundException("Peça não encontrada no estoque com o ID: " + id);
+        }
+
+        pecaUtilizadaRepository.deleteByPecaId(id);
+        pecaRepository.deleteById(id);
+    }
+
 
     public PecaEntity atualizarPeca(Long id, PecaDto dto) throws NotFoundException {
         PecaEntity pecaExistente = pecaRepository.findById(id)
@@ -60,4 +68,5 @@ public class PecaService {
 
         return pecaRepository.save(pecaExistente);
     }
+
 }

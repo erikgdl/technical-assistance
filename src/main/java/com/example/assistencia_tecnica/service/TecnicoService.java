@@ -59,5 +59,8 @@ public class TecnicoService {
         return tecnicoRepository.save(tecnicoExistente);
     }
 
+    public void deleteTecnico(Long id) throws NotFoundException {
+        tecnicoRepository.deleteById(id);
+    }
 
 }

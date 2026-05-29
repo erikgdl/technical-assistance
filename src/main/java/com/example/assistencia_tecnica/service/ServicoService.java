@@ -1,14 +1,9 @@
 package com.example.assistencia_tecnica.service;
 
-import com.example.assistencia_tecnica.database.model.*;
-import com.example.assistencia_tecnica.database.repository.IClienteRepository;
-import com.example.assistencia_tecnica.database.repository.IOrdemServicoRepository;
+import com.example.assistencia_tecnica.database.model.ServicoEntity;
 import com.example.assistencia_tecnica.database.repository.IServicoRealizadoRepository;
 import com.example.assistencia_tecnica.database.repository.IServicoRepository;
-import com.example.assistencia_tecnica.dto.ClienteDto;
 import com.example.assistencia_tecnica.dto.ServicoDto;
-import com.example.assistencia_tecnica.enums.StatusServicoEnum;
-import com.example.assistencia_tecnica.exception.BadRequestException;
 import com.example.assistencia_tecnica.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,6 +20,7 @@ import java.util.List;
 public class ServicoService {
 
     private final IServicoRepository servicoRepository;
+    private final IServicoRealizadoRepository servicoRealizadoRepository;
 
     public ServicoEntity criarServico(ServicoDto dto) {
 
@@ -45,6 +42,16 @@ public class ServicoService {
     public ServicoEntity buscarPorId(Long id) throws NotFoundException {
         return servicoRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Serviço não encontrado no catálogo com o ID: " + id));
+    }
+
+    @Transactional
+    public void deletar(Long id) throws NotFoundException {
+        if (!servicoRepository.existsById(id)) {
+            throw new NotFoundException("Serviço não encontrado no catálogo com o ID: " + id);
+        }
+
+        servicoRealizadoRepository.deleteByServicoId_Id(id);
+        servicoRepository.deleteById(id);
     }
 
     public ServicoEntity atualizarServico(Long id, ServicoDto dto) throws NotFoundException {

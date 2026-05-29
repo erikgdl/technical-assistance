@@ -4,6 +4,9 @@ import com.example.assistencia_tecnica.database.model.ClienteEntity;
 import com.example.assistencia_tecnica.database.model.EquipamentoEntity;
 import com.example.assistencia_tecnica.database.repository.IClienteRepository;
 import com.example.assistencia_tecnica.database.repository.IEquipamentoRepository;
+import com.example.assistencia_tecnica.database.repository.IOrdemServicoRepository;
+import com.example.assistencia_tecnica.database.repository.IPecaUtilizadaRepository;
+import com.example.assistencia_tecnica.database.repository.IServicoRealizadoRepository;
 import com.example.assistencia_tecnica.dto.EquipamentoDto;
 import com.example.assistencia_tecnica.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +26,9 @@ public class EquipamentoService {
 
     private final IEquipamentoRepository equipamentoRepository;
     private final IClienteRepository clienteRepository;
+    private final IOrdemServicoRepository ordemServicoRepository;
+    private final IPecaUtilizadaRepository pecaUtilizadaRepository;
+    private final IServicoRealizadoRepository servicoRealizadoRepository;
 
 
     public EquipamentoEntity criarEquipamento(EquipamentoDto equipamentoDto) throws NotFoundException {
@@ -38,6 +46,23 @@ public class EquipamentoService {
 
     public List<EquipamentoEntity> getListarEquipamento() {
         return equipamentoRepository.findAll();
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deletar(UUID id) throws NotFoundException {
+        if (!equipamentoRepository.existsById(id)) {
+            throw new NotFoundException("Equipamento não encontrado com o ID: " + id);
+        }
+
+        var ordensServico = ordemServicoRepository.findByEquipamentoId(id);
+        for (var ordemServico : ordensServico) {
+            pecaUtilizadaRepository.deleteByOrdemServicoId_Id(ordemServico.getId());
+            servicoRealizadoRepository.deleteByOrdemServicoId_Id(ordemServico.getId());
+        }
+
+        ordemServicoRepository.deleteAll(ordensServico);
+        equipamentoRepository.deleteById(id);
     }
 
     public EquipamentoEntity getBuscarPorId(UUID id) throws NotFoundException {

@@ -1,7 +1,12 @@
 package com.example.assistencia_tecnica.service;
 
 import com.example.assistencia_tecnica.database.model.ClienteEntity;
+import com.example.assistencia_tecnica.database.model.OrdemServicoEntity;
 import com.example.assistencia_tecnica.database.repository.IClienteRepository;
+import com.example.assistencia_tecnica.database.repository.IEquipamentoRepository;
+import com.example.assistencia_tecnica.database.repository.IOrdemServicoRepository;
+import com.example.assistencia_tecnica.database.repository.IPecaUtilizadaRepository;
+import com.example.assistencia_tecnica.database.repository.IServicoRealizadoRepository;
 import com.example.assistencia_tecnica.dto.ClienteDto;
 import com.example.assistencia_tecnica.exception.BadRequestException;
 import com.example.assistencia_tecnica.exception.NotFoundException;
@@ -11,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +26,10 @@ import java.util.UUID;
 public class ClienteService {
 
     private final IClienteRepository clienteRepository;
+    private final IEquipamentoRepository equipamentoRepository;
+    private final IOrdemServicoRepository ordemServicoRepository;
+    private final IPecaUtilizadaRepository pecaUtilizadaRepository;
+    private final IServicoRealizadoRepository servicoRealizadoRepository;
 
     public ClienteEntity criarCliente(ClienteDto clienteDto) throws BadRequestException {
         ClienteEntity clienteEmail = clienteRepository.findByEmail(clienteDto.getEmail())
@@ -72,10 +82,21 @@ public class ClienteService {
         return cliente;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deletar(UUID id) throws NotFoundException {
         ClienteEntity cliente = getBuscarPorId(id);
+        List<OrdemServicoEntity> ordensServico = ordemServicoRepository.findByClienteId(id);
+
+        for (OrdemServicoEntity ordemServico : ordensServico) {
+            pecaUtilizadaRepository.deleteByOrdemServicoId_Id(ordemServico.getId());
+            servicoRealizadoRepository.deleteByOrdemServicoId_Id(ordemServico.getId());
+        }
+
+        ordemServicoRepository.deleteAll(ordensServico);
+        equipamentoRepository.deleteByClienteId(id);
         clienteRepository.delete(cliente);
     }
+
 
     public ClienteEntity atualizarCliente(UUID id, ClienteDto dto) throws NotFoundException {
         ClienteEntity clienteExistente = clienteRepository.findById(id)

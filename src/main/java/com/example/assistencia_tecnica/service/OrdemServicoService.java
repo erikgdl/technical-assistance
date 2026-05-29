@@ -27,10 +27,10 @@ public class OrdemServicoService {
     private final IEquipamentoRepository equipamentoRepository;
     private final IOrdemServicoRepository ordemServicoRepository;
     private final IPecaRepository pecaRepository;
-    private final IServicoRealizadoRepository servicoRealizadoRepository;
     private final ITecnicoRepository tecnicoRepository;
     private final IServicoRepository servicoRepository;
     private final IPecaUtilizadaRepository pecaUtilizadaRepository;
+    private final IServicoRealizadoRepository servicoRealizadoRepository;
 
     public OrdemServicoEntity abrirOS(OrdemServicoDto dto) throws NotFoundException, BadRequestException {
         ClienteEntity cliente = clienteRepository.findById(dto.getClienteId())
@@ -210,6 +210,18 @@ public class OrdemServicoService {
         return ordemServicoRepository.save(os);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void deletar(UUID ordemServicoId) throws NotFoundException {
+        if (!ordemServicoRepository.existsById(ordemServicoId)) {
+            throw new NotFoundException("Ordem de Serviço não encontrada com o ID: " + ordemServicoId);
+        }
+
+        pecaUtilizadaRepository.deleteByOrdemServicoId_Id(ordemServicoId);
+        servicoRealizadoRepository.deleteByOrdemServicoId_Id(ordemServicoId);
+        ordemServicoRepository.deleteById(ordemServicoId);
+    }
+
+    @Transactional
     public OrdemServicoEntity adicionarServico(UUID ordemServicoId, AdicionarServicoDto dto) throws BadRequestException, NotFoundException {
 
         OrdemServicoEntity os = ordemServicoRepository.findById(ordemServicoId)
