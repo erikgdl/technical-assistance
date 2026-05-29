@@ -30,6 +30,13 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(novoCliente);
     }
 
+    @PutMapping("/atualiza/{id}")
+    public ResponseEntity<ClienteEntity> atualizarCliente(@PathVariable UUID id,
+                                                          @RequestBody @Valid ClienteDto dto) throws NotFoundException {
+        ClienteEntity atualizarCliente = clienteService.atualizarCliente(id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(atualizarCliente);
+    }
+
     @GetMapping("/todos")
     public ResponseEntity<List<ClienteEntity>> listarTodosClientes() {
         List<ClienteEntity> cliente = clienteService.getListarCliente();

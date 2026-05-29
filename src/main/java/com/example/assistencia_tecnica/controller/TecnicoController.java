@@ -4,6 +4,7 @@ import com.example.assistencia_tecnica.database.model.TecnicoEntity;
 import com.example.assistencia_tecnica.dto.TecnicoDto;
 import com.example.assistencia_tecnica.exception.NotFoundException;
 import com.example.assistencia_tecnica.service.TecnicoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,13 @@ public class TecnicoController {
     public ResponseEntity<List<TecnicoEntity>> listarTodosClientes() {
         List<TecnicoEntity> tecnico = tecnicoService.getListarTecnico();
         return ResponseEntity.status(HttpStatus.OK).body(tecnico);
+    }
+
+    @PutMapping("/atualiza/{id}")
+    public ResponseEntity<TecnicoEntity> atualizarPeco(@PathVariable Long id,
+                                                       @RequestBody @Valid TecnicoDto dto) throws NotFoundException {
+        TecnicoEntity atualizarPeco = tecnicoService.atualizarTecnico(id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(atualizarPeco);
     }
 
 

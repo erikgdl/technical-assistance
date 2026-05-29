@@ -28,6 +28,13 @@ public class PecaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(novaPeca);
     }
 
+    @PutMapping("/atualiza/{id}")
+    public ResponseEntity<PecaEntity> atualizarPeco(@PathVariable Long id,
+                                                          @RequestBody @Valid PecaDto dto) throws NotFoundException {
+        PecaEntity atualizarPeca = pecaService.atualizarPeca(id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(atualizarPeca);
+    }
+
     @GetMapping("/todos")
     public ResponseEntity<List<PecaEntity>> listarPecas() {
         List<PecaEntity> peca = pecaService.getListarPeca();

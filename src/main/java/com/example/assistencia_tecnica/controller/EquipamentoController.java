@@ -4,6 +4,7 @@ import com.example.assistencia_tecnica.database.model.EquipamentoEntity;
 import com.example.assistencia_tecnica.dto.EquipamentoDto;
 import com.example.assistencia_tecnica.exception.NotFoundException;
 import com.example.assistencia_tecnica.service.EquipamentoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,12 @@ public class EquipamentoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(novoEquipamento);
     }
 
+    @PutMapping("/atualiza/{id}")
+    public ResponseEntity<EquipamentoEntity> atualizarEquipamento(@PathVariable UUID id,
+                                                          @RequestBody @Valid EquipamentoDto dto) throws NotFoundException {
+        EquipamentoEntity atualizarEquipamento = equipamentoService.atualizarEquipamento(id, dto);
+        return ResponseEntity.status(HttpStatus.OK).body(atualizarEquipamento);
+    }
 
     @GetMapping("/todos")
     public ResponseEntity<List<EquipamentoEntity>> listarTodosEquipamentos() {
