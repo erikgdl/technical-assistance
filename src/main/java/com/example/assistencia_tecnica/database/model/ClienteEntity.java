@@ -33,7 +33,7 @@ public class ClienteEntity {
     private String email;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<EquipamentoEntity> equipamentos = new HashSet<>();
 
 }
