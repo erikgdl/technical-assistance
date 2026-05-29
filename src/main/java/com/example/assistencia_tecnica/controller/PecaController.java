@@ -52,4 +52,10 @@ public class PecaController {
     public ResponseEntity<PecaEntity> buscarPorId(@PathVariable("id") Long id) throws NotFoundException {
         return ResponseEntity.ok(pecaService.buscarPorId(id));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarPeca(@PathVariable("id") Long id) throws NotFoundException {
+        pecaService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

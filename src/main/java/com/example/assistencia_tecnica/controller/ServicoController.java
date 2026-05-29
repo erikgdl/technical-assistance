@@ -52,4 +52,10 @@ public class ServicoController {
     public ResponseEntity<ServicoEntity> buscarPorId(@PathVariable("id") Long id) throws NotFoundException {
         return ResponseEntity.ok(servicoService.buscarPorId(id));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarServico(@PathVariable("id") Long id) throws NotFoundException {
+        servicoService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

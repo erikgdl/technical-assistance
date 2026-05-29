@@ -66,4 +66,9 @@ public class EquipamentoController {
         return ResponseEntity.ok(equipamentoService.buscarPorNumeroSerie(numeroSerie));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarEquipamento(@PathVariable("id") UUID id) throws NotFoundException {
+        equipamentoService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

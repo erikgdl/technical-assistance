@@ -33,6 +33,13 @@ public class TecnicoController {
         return ResponseEntity.status(HttpStatus.OK).body(tecnico);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarTecnico(@PathVariable("id") Long id) throws NotFoundException {
+        tecnicoService.deleteTecnico(id);
+        // Retorna o status 204 (No Content)
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/atualiza/{id}")
     public ResponseEntity<TecnicoEntity> atualizarPeco(@PathVariable Long id,
                                                        @RequestBody @Valid TecnicoDto dto) throws NotFoundException {
@@ -52,6 +59,4 @@ public class TecnicoController {
         TecnicoEntity tecnicoMatricula = tecnicoService.getBuscarPorMatricula(matricula);
         return ResponseEntity.status(HttpStatus.OK).body(tecnicoMatricula);
     }
-
-
 }

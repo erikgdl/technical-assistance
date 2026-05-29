@@ -142,4 +142,10 @@ public class OrdemServicoController {
     public ResponseEntity<OrdemServicoEntity> entregarEquipamento(@PathVariable("id") UUID id) throws Exception {
         return ResponseEntity.ok(ordemServicoService.entregarEquipamento(id));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarOrdemServico(@PathVariable("id") UUID id) throws NotFoundException {
+        ordemServicoService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

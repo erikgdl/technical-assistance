@@ -77,5 +77,4 @@ public class ClienteController {
         // Retorna o status 204 (No Content)
         return ResponseEntity.noContent().build();
     }
-
 }
